@@ -7,6 +7,10 @@ services:
       - "5000:5000"
     environment:
       - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    depends_on:
+      - db
     develop:
       watch:
         - action: sync
@@ -25,3 +29,14 @@ services:
           target: /app/src
         - action: rebuild
           path: ./frontend/package.json
+
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+volumes:
+  db-data:

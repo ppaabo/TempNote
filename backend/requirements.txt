@@ -4,4 +4,7 @@ Flask==3.1.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
+psycopg==3.2.5
+psycopg-binary==3.2.5
+typing_extensions==4.12.2
 Werkzeug==3.1.3
