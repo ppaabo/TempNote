@@ -1,23 +1,32 @@
 export function useCrypto() {
-  const generateKey = async () => {
-    return crypto.subtle.generateKey(
-      {
-        name: "AES-GCM",
-        length: 256,
-      },
-      true,
-      ["encrypt", "decrypt"]
-    );
+  const pack = (buffer) => {
+    return window.btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  };
+
+  const unpack = (packed) => {
+    const string = window.atob(packed);
+    const buffer = new ArrayBuffer(string.length);
+    const bufferView = new Uint8Array(buffer);
+
+    for (let i = 0; i < string.length; i++) {
+      bufferView[i] = string.charCodeAt(i);
+    }
+
+    return buffer;
   };
 
   const encode = (data) => {
     const encoder = new TextEncoder();
-
     return encoder.encode(data);
   };
 
+  const decode = (data) => {
+    const decoder = new TextDecoder();
+    return decoder.decode(data);
+  };
+
   const generateIv = () => {
-    return window.crypto.getRandomValues(new Uint8Array(12));
+    return crypto.getRandomValues(new Uint8Array(12));
   };
 
   const deriveKey = async (password, salt) => {
@@ -48,13 +57,7 @@ export function useCrypto() {
     const encoded = encode(message);
     const iv = generateIv();
     const salt = crypto.getRandomValues(new Uint8Array(16));
-
-    let key;
-    if (password) {
-      key = await deriveKey(password, salt);
-    } else {
-      key = await generateKey();
-    }
+    const key = await deriveKey(password, salt);
 
     const cipher = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
@@ -62,11 +65,32 @@ export function useCrypto() {
       encoded
     );
     return {
-      ciphertext: btoa(String.fromCharCode(...new Uint8Array(cipher))),
-      iv: btoa(String.fromCharCode(...iv)),
-      salt: password ? btoa(String.fromCharCode(...salt)) : null, // Store salt if using a password
+      ciphertext: pack(cipher),
+      iv: pack(iv),
+      salt: pack(salt),
     };
   };
 
-  return { encryptMsg };
+  const decryptMsg = async (ciphertext, iv, salt, password) => {
+    const ivBuffer = new Uint8Array(unpack(iv));
+    const cipherBuffer = new Uint8Array(unpack(ciphertext));
+    const saltBuffer = salt ? new Uint8Array(unpack(salt)) : null;
+
+    try {
+      if (!password || !saltBuffer) {
+        throw new Error("Salt & password are required for decryption.");
+      }
+      const key = await deriveKey(password, saltBuffer);
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: ivBuffer },
+        key,
+        cipherBuffer
+      );
+      return decode(decrypted);
+    } catch (error) {
+      console.error("Decryption failed:", error);
+      return null;
+    }
+  };
+  return { encryptMsg, decryptMsg };
 }
