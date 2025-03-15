@@ -23,7 +23,7 @@ def initialize_db():
                     """
                         CREATE TABLE IF NOT EXISTS messages (
                             msg_id uuid DEFAULT gen_random_uuid(),
-                            encrypted_msg TEXT NOT NULL,
+                            ciphertext TEXT NOT NULL,
                             iv TEXT NOT NULL,
                             salt TEXT NOT NULL
                         )

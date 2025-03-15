@@ -1,10 +1,10 @@
 from flask import Blueprint, request, jsonify
 from src.services.message_service import save_message, get_message, delete_message
 
-message_bp = Blueprint("message", __name__)
+messages_bp = Blueprint("messages", __name__)
 
 
-@message_bp.route("/message", methods=["POST"])
+@messages_bp.route("/messages", methods=["POST"])
 def create_message():
     data = request.json
     msg_id = save_message(data)
@@ -13,7 +13,7 @@ def create_message():
     return jsonify({"error": "Saving the message failed"}), 400
 
 
-@message_bp.route("/message/<id>", methods=["GET"])
+@messages_bp.route("/messages/<id>", methods=["GET"])
 def fetch_message(id):
     message = get_message(id)
     if message:
@@ -21,7 +21,7 @@ def fetch_message(id):
     return jsonify({"error": "Message not found"}), 404
 
 
-@message_bp.route("/message/<id>", methods=["DELETE"])
+@messages_bp.route("/messages/<id>", methods=["DELETE"])
 def remove_message(id):
     deleted = delete_message(id)
     if deleted:

@@ -1,15 +1,20 @@
 <script setup>
 import { ref } from "vue";
-import { useCrypto } from "../composables/useCrypto.js";
+import { sendMessage } from "../utils/messages";
+import { encryptMsg } from "../utils/encryption";
 
-const { encryptMsg } = useCrypto();
-
-const message = ref("Secret Message");
-const password = ref("super-secure-password");
+const message = ref("");
+const password = ref("");
 const encrypted = ref(null);
 
 const encrypt = async () => {
-  encrypted.value = await encryptMsg(message.value, password.value);
+  const encryptedMsg = await encryptMsg(message.value, password.value);
+  const response = await sendMessage(encryptedMsg);
+  if (response) {
+    encrypted.value = response;
+  } else {
+    console.error("Sending message failed");
+  }
 };
 </script>
 

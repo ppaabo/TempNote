@@ -1,31 +1,29 @@
 <script setup>
 // For testing decryption of messages
 import { ref } from "vue";
-import { useCrypto } from "../composables/useCrypto.js";
+import { decryptMsg } from "../utils/encryption";
+import { fetchMessage } from "../utils/messages";
 
-const { decryptMsg } = useCrypto();
-
-const ciphertext = ref("");
+const msg_id = ref("");
 const password = ref("");
-const iv = ref("");
-const salt = ref("");
 const decrypted = ref(null);
 
 const decrypt = async () => {
-  decrypted.value = await decryptMsg(
-    ciphertext.value,
-    iv.value,
-    salt.value,
-    password.value
-  );
+  const message = await fetchMessage(msg_id.value);
+  if (message) {
+    const { ciphertext, iv, salt } = message;
+    decrypted.value =
+      (await decryptMsg(ciphertext, iv, salt, password.value)) ||
+      "Decryption failed";
+  } else {
+    decrypted.value = "Message not found";
+  }
 };
 </script>
 
 <template>
   <div class="reader-container">
-    <input class="text-input" v-model="ciphertext" placeholder="Enter cipher" />
-    <input class="text-input" v-model="iv" placeholder="Enter iv" />
-    <input class="text-input" v-model="salt" placeholder="Enter salt" />
+    <input class="text-input" v-model="msg_id" placeholder="Enter msg_id" />
     <input
       class="text-input"
       type="password"

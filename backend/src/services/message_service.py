@@ -5,11 +5,11 @@ def save_message(data):
     db = get_db()
     try:
         with db.cursor() as cur:
-            SQL = "INSERT INTO messages (encrypted_msg, iv, salt) VALUES (%s, %s, %s) RETURNING msg_id"
+            SQL = "INSERT INTO messages (ciphertext, iv, salt) VALUES (%s, %s, %s) RETURNING msg_id"
             cur.execute(
                 SQL,
                 (
-                    data["encrypted_msg"],
+                    data["ciphertext"],
                     data["iv"],
                     data["salt"],
                 ),
@@ -28,11 +28,11 @@ def get_message(id):
     db = get_db()
     try:
         with db.cursor() as cur:
-            SQL = "SELECT encrypted_msg, iv, salt FROM messages WHERE msg_id = %s"
+            SQL = "SELECT ciphertext, iv, salt FROM messages WHERE msg_id = %s"
             cur.execute(SQL, (id,))
             message = cur.fetchone()
         if message:
-            return message
+            return {"ciphertext": message[0], "iv": message[1], "salt": message[2]}
     except Exception as e:
         print(f"get_message Error: {e}")
         return None
