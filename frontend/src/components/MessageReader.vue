@@ -23,12 +23,12 @@ const decrypt = async () => {
 
 <template>
   <div class="reader-container">
-    <input class="text-input" v-model="msg_id" placeholder="Enter msg_id" />
+    <input class="text-input" v-model="msg_id" placeholder="Message ID" />
     <input
       class="text-input"
       type="password"
       v-model="password"
-      placeholder="Enter password"
+      placeholder="Password"
     />
     <button class="button" @click="decrypt">Decrypt</button>
     <pre>{{ decrypted }}</pre>

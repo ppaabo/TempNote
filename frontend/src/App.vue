@@ -1,12 +1,8 @@
-<script setup>
-import MessageComposer from "./components/MessageComposer.vue";
-import MessageReader from "./components/MessageReader.vue";
-</script>
+<script setup></script>
 
 <template>
   <div class="app-container">
-    <MessageComposer />
-    <MessageReader />
+    <RouterView />
   </div>
 </template>
 
