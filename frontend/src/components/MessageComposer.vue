@@ -1,17 +1,17 @@
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import { sendMessage } from "../utils/messages";
 import { encryptMsg } from "../utils/encryption";
 
+const router = useRouter();
 const message = ref("");
 const password = ref("");
-const encrypted = ref(null);
-
 const encrypt = async () => {
   const encryptedMsg = await encryptMsg(message.value, password.value);
   const response = await sendMessage(encryptedMsg);
   if (response) {
-    encrypted.value = response;
+    router.push({ name: "save", params: { id: response.msg_id } });
   } else {
     console.error("Sending message failed");
   }
@@ -28,7 +28,6 @@ const encrypt = async () => {
       placeholder="Enter password"
     />
     <button class="button" @click="encrypt">Encrypt</button>
-    <pre>{{ encrypted }}</pre>
   </div>
 </template>
 

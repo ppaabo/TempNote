@@ -24,9 +24,9 @@ const decode = (data) => {
   return decoder.decode(data);
 };
 
-const generateIv = () => {
-  return crypto.getRandomValues(new Uint8Array(12));
-};
+// const generateIv = () => {
+//   return crypto.getRandomValues(new Uint8Array(12));
+// };
 
 const deriveKey = async (password, salt) => {
   const encodedPassword = encode(password);
@@ -54,7 +54,7 @@ const deriveKey = async (password, salt) => {
 
 export const encryptMsg = async (message, password) => {
   const encoded = encode(message);
-  const iv = generateIv();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveKey(password, salt);
 
