@@ -1,17 +1,26 @@
 <script setup>
-// For testing decryption of messages
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { decryptMsg } from "../utils/encryption";
 import { fetchMessage } from "../utils/messages";
 
-const msg_id = ref("");
+const props = defineProps({
+  id: String,
+});
+
+const message = ref(null);
 const password = ref("");
 const decrypted = ref(null);
 
+onMounted(async () => {
+  if (props.id) {
+    message.value = await fetchMessage(props.id);
+    console.log("Message fetched", message.value);
+  }
+});
+
 const decrypt = async () => {
-  const message = await fetchMessage(msg_id.value);
-  if (message) {
-    const { ciphertext, iv, salt } = message;
+  if (message.value && password.value) {
+    const { ciphertext, iv, salt } = message.value;
     decrypted.value =
       (await decryptMsg(ciphertext, iv, salt, password.value)) ||
       "Decryption failed";
@@ -23,7 +32,7 @@ const decrypt = async () => {
 
 <template>
   <div class="reader-container">
-    <input class="text-input" v-model="msg_id" placeholder="Message ID" />
+    <h3>Enter password to decrypt message</h3>
     <input
       class="text-input"
       type="password"

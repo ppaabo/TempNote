@@ -5,7 +5,7 @@ import MessageReader from "./components/MessageReader.vue";
 
 const routes = [
   { path: "/", name: "write", component: MessageComposer },
-  { path: "/read", name: "read", component: MessageReader },
+  { path: "/read/:id", name: "read", component: MessageReader, props: true },
 ];
 
 const router = createRouter({
