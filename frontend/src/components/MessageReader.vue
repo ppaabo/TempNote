@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { decryptMsg } from "../utils/encryption";
-import { fetchMessage } from "../utils/messages";
+import { fetchMessage, consumeMessage } from "../utils/messages";
 
 const props = defineProps({
   id: String,
@@ -14,18 +14,29 @@ const decrypted = ref(null);
 onMounted(async () => {
   if (props.id) {
     message.value = await fetchMessage(props.id);
-    console.log("Message fetched", message.value);
+    if (!message.value) {
+      decrypted.value = "Message not found";
+    } else {
+      console.log("Message fetched", message.value);
+    }
   }
 });
 
 const decrypt = async () => {
   if (message.value && password.value) {
     const { ciphertext, iv, salt } = message.value;
-    decrypted.value =
-      (await decryptMsg(ciphertext, iv, salt, password.value)) ||
-      "Decryption failed";
-  } else {
-    decrypted.value = "Message not found";
+    const decryptedMessage = await decryptMsg(
+      ciphertext,
+      iv,
+      salt,
+      password.value
+    );
+    if (decryptedMessage) {
+      decrypted.value = decryptedMessage;
+      consumeMessage(props.id);
+    } else {
+      decrypted.value = "Decryption failed!";
+    }
   }
 };
 </script>

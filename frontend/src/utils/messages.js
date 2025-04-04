@@ -32,3 +32,18 @@ export const fetchMessage = async (id) => {
     return null;
   }
 };
+
+export const consumeMessage = async (id) => {
+  try {
+    const response = await fetch(`/api/messages/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log("Message consumed: ", data);
+  } catch (error) {
+    console.error(error.message);
+  }
+};
