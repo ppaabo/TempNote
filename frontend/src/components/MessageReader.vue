@@ -44,6 +44,9 @@ const decrypt = async () => {
 <template>
   <div class="reader-container">
     <h3>Enter password to decrypt message</h3>
+    <p class="info-text">
+      Once a message is decrypted, it will be automatically destroyed.
+    </p>
     <input
       class="text-input"
       type="password"
@@ -66,5 +69,11 @@ input {
   padding: 12px 20px;
   margin: 8px 0;
   box-sizing: border-box;
+}
+
+.info-text {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 8px;
 }
 </style>
