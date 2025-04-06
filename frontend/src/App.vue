@@ -1,8 +1,14 @@
-<script setup></script>
+<script setup>
+import { createNotificationStore } from "./stores/notificationStore";
+import NotificationContainer from "./components/NotificationContainer.vue";
+
+createNotificationStore();
+</script>
 
 <template>
   <div class="app-container">
     <RouterView />
+    <NotificationContainer />
   </div>
 </template>
 

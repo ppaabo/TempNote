@@ -3,7 +3,9 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { sendMessage } from "../utils/messages";
 import { encryptMsg } from "../utils/encryption";
+import { useNotificationStore } from "../stores/notificationStore";
 
+const notificationStore = useNotificationStore();
 const router = useRouter();
 const message = ref("");
 const password = ref("");
@@ -16,7 +18,10 @@ const encrypt = async () => {
   if (response) {
     router.push({ name: "save", params: { id: response.msg_id } });
   } else {
-    console.error("Sending message failed");
+    notificationStore.add({
+      message: "Saving the message failed",
+      type: "error",
+    });
   }
 };
 </script>

@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { decryptMsg } from "../utils/encryption";
 import { fetchMessage, consumeMessage } from "../utils/messages";
+import { useNotificationStore } from "../stores/notificationStore";
 
 const props = defineProps({
   id: String,
@@ -10,7 +11,7 @@ const props = defineProps({
 const message = ref(null);
 const password = ref("");
 const decrypted = ref(null);
-
+const notificationStore = useNotificationStore();
 onMounted(async () => {
   if (props.id) {
     message.value = await fetchMessage(props.id);
@@ -18,6 +19,7 @@ onMounted(async () => {
       decrypted.value = "Message not found";
     } else {
       console.log("Message fetched", message.value);
+      notificationStore.add({ message: "Message retrieved", type: "success" });
     }
   }
 });
@@ -73,7 +75,7 @@ input {
 
 .info-text {
   font-size: 0.9rem;
-  color: #555;
+  color: rgba(255, 255, 255, 0.87);
   margin-bottom: 8px;
 }
 </style>
