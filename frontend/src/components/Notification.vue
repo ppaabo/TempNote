@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 
 const props = defineProps({
   id: {

@@ -4,15 +4,18 @@ import { decryptMsg } from "../utils/encryption";
 import { fetchMessage, consumeMessage } from "../utils/messages";
 import { useNotificationStore } from "../stores/notificationStore";
 import { handleError, ErrorTypes } from "../utils/errorHandler";
+import { useRouter } from "vue-router";
 
-const props = defineProps({
-  id: String,
-});
 const message = ref(null);
 const password = ref("");
 const decrypted = ref(null);
 const isLoading = ref(false);
 const notificationStore = useNotificationStore();
+const router = useRouter();
+
+const props = defineProps({
+  id: String,
+});
 
 // Retrieve the message when component is mounted
 onMounted(async () => {
@@ -79,6 +82,10 @@ const readMessage = async () => {
     isLoading.value = false;
   }
 };
+
+const handleClick = () => {
+  router.push({ name: "write" });
+};
 </script>
 
 <template>
@@ -98,15 +105,15 @@ const readMessage = async () => {
         @keyup.enter="decrypt"
       />
       <button
-        class="button"
+        class="btn btn-primary"
         @click="readMessage"
         :disabled="isLoading || !message"
       >
         Decrypt
       </button>
     </template>
-
     <pre v-if="decrypted" class="decrypted-content">{{ decrypted }}</pre>
+    <button class="btn btn-secondary" @click="handleClick">Home</button>
   </div>
 </template>
 
@@ -134,14 +141,5 @@ input {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   margin: 10px 0;
-}
-
-.decrypted-content {
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 16px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-top: 16px;
 }
 </style>

@@ -41,8 +41,10 @@ const writeNew = () => {
       Copy the URL from below and send it to the recipient
     </p>
     <input class="text-input" v-model="url" readonly />
-    <button class="button" @click="copyToClipboard">Copy URL</button>
-    <button class="button" @click="writeNew">Write a new message</button>
+    <button class="btn btn-primary" @click="copyToClipboard">Copy URL</button>
+    <button class="btn btn-secondary" @click="writeNew">
+      Write a new message
+    </button>
   </div>
 </template>
 
@@ -57,11 +59,5 @@ input {
   padding: 12px 20px;
   margin: 8px 0;
   box-sizing: border-box;
-}
-
-button {
-  padding: 12px 20px;
-  margin: 8px 0;
-  cursor: pointer;
 }
 </style>

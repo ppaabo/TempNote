@@ -71,7 +71,7 @@ const encrypt = async () => {
       </select>
     </div>
 
-    <button class="button" @click="encrypt" :disabled="isLoading">
+    <button class="btn btn-primary" @click="encrypt" :disabled="isLoading">
       <span v-if="isLoading">Encrypting...</span>
       <span v-else>Encrypt & Save</span>
     </button>
@@ -131,44 +131,4 @@ select {
   width: auto;
   flex-grow: 1;
 }
-
-button {
-  padding: 12px 20px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-
-button:hover:not(:disabled) {
-  background-color: #3e8e41;
-}
-
-button:disabled {
-  background-color: #525252;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
 </style>
-<!-- <style scoped>
-.composer-container {
-  display: flex;
-  flex-direction: column;
-}
-
-input {
-  width: 100%;
-  padding: 12px 20px;
-  margin: 8px 0;
-  box-sizing: border-box;
-}
-select {
-  width: 100%;
-  padding: 12px 20px;
-  margin: 8px 0;
-  box-sizing: border-box;
-}
-</style> -->
