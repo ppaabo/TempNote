@@ -1,5 +1,4 @@
 import { AppError, ErrorTypes } from "../utils/errorHandler";
-
 export const sendMessage = async (message) => {
   try {
     const response = await fetch("/api/messages", {
@@ -9,6 +8,7 @@ export const sendMessage = async (message) => {
       },
       body: JSON.stringify(message),
     });
+    const jsonResponse = await response.json();
     if (!response.ok) {
       const status = response.status;
       throw new AppError(
@@ -17,7 +17,7 @@ export const sendMessage = async (message) => {
         new Error(`Response status: ${status}`)
       );
     }
-    return await response.json();
+    return jsonResponse.data;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -38,6 +38,7 @@ export const sendMessage = async (message) => {
 export const fetchMessage = async (id) => {
   try {
     const response = await fetch(`/api/messages/${id}`);
+    const jsonResponse = await response.json();
 
     if (response.status === 404) {
       throw new AppError(
@@ -54,18 +55,16 @@ export const fetchMessage = async (id) => {
         new Error(`Response status: ${response.status}`)
       );
     }
-    const data = await response.json();
+    const data = jsonResponse.data;
     const { ciphertext, iv, salt } = data;
     return { ciphertext, iv, salt };
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
     }
-
     if (error.name === "TypeError" || error.name === "NetworkError") {
       throw new AppError(ErrorTypes.NETWORK_ERROR, null, error);
     }
-
     throw new AppError(
       ErrorTypes.UNKNOWN_ERROR,
       "An unexpected error occurred while retrieving the message",
@@ -79,6 +78,7 @@ export const consumeMessage = async (id) => {
     const response = await fetch(`/api/messages/${id}`, {
       method: "DELETE",
     });
+    const jsonResponse = await response.json();
     if (!response.ok) {
       throw new AppError(
         ErrorTypes.API_ERROR,
@@ -86,7 +86,7 @@ export const consumeMessage = async (id) => {
         new Error(`Response status: ${response.status}`)
       );
     }
-    return await response.json();
+    return jsonResponse.data;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

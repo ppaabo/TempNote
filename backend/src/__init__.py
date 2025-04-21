@@ -1,6 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask
 from src.routes.message import messages_bp
 from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
+from src.utils.response import create_response
 import logging
 
 
@@ -14,21 +15,25 @@ def create_app():
     @app.errorhandler(MessageNotFound)
     def handle_msg_not_found(e):
         logger.info(f"MessageNotFound: {e}")
-        return jsonify({"error": str(e)}), 404
+        return create_response(is_success=False, message=str(e), http_status=404)
 
     @app.errorhandler(DatabaseError)
     def handle_db_error(e):
         logger.error(f"DatabaseError: {e}")
-        return jsonify({"error": "Database error"}), 500
+        return create_response(
+            is_success=False, message="Database error", http_status=500
+        )
 
     @app.errorhandler(InvalidPayload)
     def handle_payload_error(e):
         logger.info(f"Invalid request payload: {e}")
-        return jsonify({"error": str(e)}), 400
+        return create_response(is_success=False, message=str(e), http_status=400)
 
     @app.errorhandler(Exception)
     def handle_generic_error(e):
         logger.exception(f"Unhandled Exception: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        return create_response(
+            is_success=False, message="Internal server error", http_status=500
+        )
 
     return app
