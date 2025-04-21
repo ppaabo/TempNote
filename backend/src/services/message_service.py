@@ -6,13 +6,22 @@ from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
 
 def validate_message(data):
     """Validate that the required fields are present and valid."""
+
+    # Check that all required fields exist
     required_fields = ["ciphertext", "iv", "salt", "expiration_days"]
     for field in required_fields:
         if field not in data:
             raise InvalidPayload(f"Missing required field: {field}")
 
+        # Check if string fields are empty
+        if isinstance(data[field], str) and data[field].strip() == "":
+            raise InvalidPayload(f"Field '{field}' cannot be empty")
+
     if not isinstance(data["expiration_days"], int):
         raise InvalidPayload("expiration_days must be an integer")
+
+    if data["expiration_days"] <= 0:
+        raise InvalidPayload("expiration_days must be greater than 0")
 
     max_days = 14
     if data["expiration_days"] > max_days:
