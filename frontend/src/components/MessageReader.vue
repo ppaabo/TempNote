@@ -4,14 +4,13 @@ import { decryptMsg } from "../utils/encryption";
 import { fetchMessage, consumeMessage } from "../utils/messages";
 import { useNotificationStore } from "../stores/notificationStore";
 import { handleError, ErrorTypes } from "../utils/errorHandler";
-import { useRouter } from "vue-router";
+import RouterButton from "./RouterButton.vue";
 
 const message = ref(null);
 const password = ref("");
 const decrypted = ref(null);
 const isLoading = ref(false);
 const notificationStore = useNotificationStore();
-const router = useRouter();
 
 const props = defineProps({
   id: String,
@@ -82,10 +81,6 @@ const readMessage = async () => {
     isLoading.value = false;
   }
 };
-
-const handleClick = () => {
-  router.push({ name: "write" });
-};
 </script>
 
 <template>
@@ -102,7 +97,7 @@ const handleClick = () => {
         v-model="password"
         placeholder="Password"
         :disabled="isLoading || !message"
-        @keyup.enter="decrypt"
+        @keyup.enter="readMessage"
       />
       <button
         class="btn btn-primary"
@@ -113,7 +108,7 @@ const handleClick = () => {
       </button>
     </template>
     <pre v-if="decrypted" class="decrypted-content">{{ decrypted }}</pre>
-    <button class="btn btn-secondary" @click="handleClick">Home</button>
+    <RouterButton to="write" text="Write a new message" />
   </div>
 </template>
 

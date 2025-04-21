@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import { useNotificationStore } from "../stores/notificationStore";
-const router = useRouter();
+import RouterButton from "./RouterButton.vue";
 const notificationStore = useNotificationStore();
 const url = ref("");
 
@@ -28,10 +27,6 @@ const copyToClipboard = () => {
     });
   }
 };
-
-const writeNew = () => {
-  router.push({ name: "write" });
-};
 </script>
 
 <template>
@@ -42,9 +37,7 @@ const writeNew = () => {
     </p>
     <input class="text-input" v-model="url" readonly />
     <button class="btn btn-primary" @click="copyToClipboard">Copy URL</button>
-    <button class="btn btn-secondary" @click="writeNew">
-      Write a new message
-    </button>
+    <RouterButton to="write" text="Write a new message" />
   </div>
 </template>
 
