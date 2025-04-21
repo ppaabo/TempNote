@@ -7,7 +7,8 @@ import MessageSaved from "./components/MessageSaved.vue";
 const routes = [
   { path: "/", name: "write", component: MessageComposer },
   { path: "/saved/:id", name: "save", component: MessageSaved, props: true },
-  { path: "/read/:id", name: "read", component: MessageReader, props: true },
+  { path: "/read/:id?", name: "read", component: MessageReader, props: true },
+  { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
 
 const router = createRouter({

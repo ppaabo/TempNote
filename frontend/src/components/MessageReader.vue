@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { decryptMsg } from "../utils/encryption";
 import { fetchMessage, consumeMessage } from "../utils/messages";
 import { useNotificationStore } from "../stores/notificationStore";
@@ -11,6 +12,7 @@ const password = ref("");
 const decrypted = ref(null);
 const isLoading = ref(false);
 const notificationStore = useNotificationStore();
+const router = useRouter();
 
 const props = defineProps({
   id: String,
@@ -23,6 +25,7 @@ onMounted(async () => {
       message: "No message ID provided",
       type: "warning",
     });
+    router.push({ name: "write" });
     return;
   }
   isLoading.value = true;
