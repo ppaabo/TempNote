@@ -7,10 +7,17 @@ import { useNotificationStore } from "../stores/notificationStore";
 import { handleError, ErrorTypes } from "../utils/errorHandler";
 import RouterButton from "./RouterButton.vue";
 
+const STATUS = {
+  LOADING: "loading",
+  READY: "ready",
+  DECRYPTING: "decrypting",
+  DECRYPTED: "decrypted",
+};
+
 const message = ref(null);
 const password = ref("");
 const decrypted = ref(null);
-const isLoading = ref(false);
+const status = ref(STATUS.LOADING);
 const notificationStore = useNotificationStore();
 const router = useRouter();
 
@@ -28,7 +35,7 @@ onMounted(async () => {
     router.push({ name: "write" });
     return;
   }
-  isLoading.value = true;
+  status.value = STATUS.LOADING;
 
   try {
     message.value = await fetchMessage(props.id);
@@ -36,10 +43,11 @@ onMounted(async () => {
       message: "Message retrieved successfully",
       type: "success",
     });
+    status.value = STATUS.READY;
   } catch (error) {
     handleError(error, notificationStore, "MessageReader.onMounted", true);
   } finally {
-    isLoading.value = false;
+    status.value = STATUS.READY;
   }
 });
 /**
@@ -47,7 +55,7 @@ onMounted(async () => {
  * from API if decryption is succesful
  */
 const readMessage = async () => {
-  isLoading.value = true;
+  status.value = STATUS.DECRYPTING;
   try {
     const { ciphertext, iv, salt } = message.value;
     const decryptedMessage = await decryptMsg(
@@ -57,6 +65,7 @@ const readMessage = async () => {
       password.value
     );
     decrypted.value = decryptedMessage;
+    status.value = STATUS.DECRYPTED;
     notificationStore.add({
       message: "Message decrypted successfully",
       type: "success",
@@ -80,37 +89,41 @@ const readMessage = async () => {
     if (error.type === ErrorTypes.PASSWORD_ERROR) {
       password.value = "";
     }
-  } finally {
-    isLoading.value = false;
+    status.value = STATUS.READY;
   }
 };
 </script>
 
 <template>
   <div class="reader-container">
-    <h3>Enter password to decrypt message</h3>
-    <p class="info-text">
-      Once a message is decrypted, it will be automatically destroyed.
-    </p>
-    <div v-if="isLoading" class="loading">Decrypting...</div>
-    <template v-if="!decrypted">
+    <div v-if="status === 'loading'" class="status-message">
+      Loading message...
+    </div>
+    <template v-else-if="status === 'ready' || status === 'decrypting'">
+      <h3>Enter password to decrypt message</h3>
+      <p class="info-text">
+        Once a message is decrypted, it will be automatically destroyed.
+      </p>
       <input
         class="text-input"
         type="password"
         v-model="password"
         placeholder="Password"
-        :disabled="isLoading || !message"
+        :disabled="!message || status === 'decrypting'"
         @keyup.enter="readMessage"
       />
       <button
         class="btn btn-primary"
         @click="readMessage"
-        :disabled="isLoading || !message"
+        :disabled="!message || status === 'decrypting'"
       >
-        Decrypt
+        <span v-if="status === 'decrypting'">Decrypting...</span>
+        <span v-else>Decrypt</span>
       </button>
     </template>
-    <pre v-if="decrypted" class="decrypted-content">{{ decrypted }}</pre>
+    <template v-else-if="status === 'decrypted'">
+      <pre class="decrypted-content">{{ decrypted }}</pre>
+    </template>
     <RouterButton to="write" text="Write a new message" />
   </div>
 </template>
@@ -134,10 +147,11 @@ input {
   margin-bottom: 8px;
 }
 
-.loading {
+.status-message {
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   margin: 10px 0;
+  text-align: center;
 }
 </style>
