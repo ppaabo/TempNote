@@ -40,6 +40,14 @@ export const fetchMessage = async (id) => {
     const response = await fetch(`/api/messages/${id}`);
     const jsonResponse = await response.json();
 
+    if (response.status === 400) {
+      throw new AppError(
+        ErrorTypes.VALIDATION_ERROR,
+        `Invalid message ID format: ${id}`,
+        new Error(`Invalid UUID format: ${id}`)
+      );
+    }
+
     if (response.status === 404) {
       throw new AppError(
         ErrorTypes.NOT_FOUND,

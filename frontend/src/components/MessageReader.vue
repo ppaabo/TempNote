@@ -46,9 +46,12 @@ onMounted(async () => {
     status.value = STATUS.READY;
   } catch (error) {
     handleError(error, notificationStore, "MessageReader.onMounted", true);
-  } finally {
-    status.value = STATUS.READY;
+    setTimeout(() => {
+      router.push({ name: "write" });
+    }, 500);
   }
+
+  status.value = STATUS.READY;
 });
 /**
  * Decrypts the message and displays the contents. Sends a request to delete the message

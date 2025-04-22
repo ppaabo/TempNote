@@ -2,6 +2,7 @@ import psycopg
 from src.db import get_db
 from datetime import datetime, timedelta, timezone
 from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
+import uuid
 
 
 def validate_message(data):
@@ -30,6 +31,13 @@ def validate_message(data):
         )
 
     return True
+
+
+def validate_uuid(uuid_string):
+    try:
+        return uuid.UUID(uuid_string)
+    except ValueError:
+        raise InvalidPayload(f"Invalid UUID format: {uuid_string}")
 
 
 def save_message(data):
@@ -61,6 +69,8 @@ def save_message(data):
 
 
 def get_message(id):
+    validate_uuid(id)
+
     db = get_db()
     try:
         with db.cursor() as cur:
@@ -84,6 +94,7 @@ def get_message(id):
 
 
 def consume_message(id):
+    validate_uuid(id)
     db = get_db()
     now = datetime.now(timezone.utc)
 
