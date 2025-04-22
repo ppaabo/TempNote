@@ -1,8 +1,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useNotificationStore } from "../stores/notificationStore";
-import RouterButton from "./RouterButton.vue";
+import { validate as uuidValidate } from "uuid";
 const notificationStore = useNotificationStore();
+const router = useRouter();
+
 const url = ref("");
 
 const props = defineProps({
@@ -11,7 +14,12 @@ const props = defineProps({
 
 onMounted(() => {
   if (props.id) {
-    url.value = `http://localhost:5173/read/${props.id}`;
+    if (uuidValidate(props.id)) {
+      url.value = `http://localhost:5173/read/${props.id}`;
+    } else {
+      notificationStore.add({ message: "MessageID is not valid!" });
+      router.push({ name: "write" });
+    }
   }
 });
 
