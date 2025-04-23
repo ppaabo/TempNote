@@ -91,7 +91,15 @@ export const handleError = (
 
   // Log error with context for debugging
   if (context) {
-    console.error(`Error in ${context}:`, error);
+    if (error instanceof AppError && error.originalError) {
+      console.error(`Error in ${context}:`, {
+        userMessage: error.message,
+        errorMessage: error.originalError.message,
+        error: error.originalError,
+      });
+    } else {
+      console.error(`Error in ${context}:`, error);
+    }
   } else {
     console.error(error);
   }

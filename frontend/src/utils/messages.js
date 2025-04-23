@@ -1,4 +1,5 @@
 import { AppError, ErrorTypes } from "../utils/errorHandler";
+import { validate as uuidValidate } from "uuid";
 export const sendMessage = async (message) => {
   try {
     const response = await fetch("/api/messages", {
@@ -37,13 +38,20 @@ export const sendMessage = async (message) => {
 
 export const fetchMessage = async (id) => {
   try {
+    if (!uuidValidate(id)) {
+      throw new AppError(
+        ErrorTypes.VALIDATION_ERROR,
+        `The message link appears to be invalid`,
+        new Error(`Invalid UUID format: ${id}`)
+      );
+    }
     const response = await fetch(`/api/messages/${id}`);
     const jsonResponse = await response.json();
 
     if (response.status === 400) {
       throw new AppError(
         ErrorTypes.VALIDATION_ERROR,
-        `Invalid message ID format: ${id}`,
+        `The message ID appears to be invalid`,
         new Error(`Invalid UUID format: ${id}`)
       );
     }
@@ -51,7 +59,7 @@ export const fetchMessage = async (id) => {
     if (response.status === 404) {
       throw new AppError(
         ErrorTypes.NOT_FOUND,
-        "Message not found or already read",
+        "This message is unavailable or has already been read",
         new Error(`Message with ID ${id} not found`)
       );
     }
@@ -83,6 +91,13 @@ export const fetchMessage = async (id) => {
 
 export const consumeMessage = async (id) => {
   try {
+    if (!uuidValidate(id)) {
+      throw new AppError(
+        ErrorTypes.VALIDATION_ERROR,
+        `The message ID appears to be invalid`,
+        new Error(`Invalid UUID format: ${id}`)
+      );
+    }
     const response = await fetch(`/api/messages/${id}`, {
       method: "DELETE",
     });
