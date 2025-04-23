@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useNotificationStore } from "../stores/notificationStore";
 import { validate as uuidValidate } from "uuid";
+import RouterButton from "./RouterButton.vue";
 const notificationStore = useNotificationStore();
 const router = useRouter();
 
@@ -15,9 +16,10 @@ const props = defineProps({
 onMounted(() => {
   if (props.id) {
     if (uuidValidate(props.id)) {
-      url.value = `http://localhost:5173/read/${props.id}`;
+      const route = router.resolve({ name: "read", params: { id: props.id } });
+      url.value = window.location.origin + route.href;
     } else {
-      notificationStore.add({ message: "MessageID is not valid!" });
+      notificationStore.add({ message: "MessageID is not valid" });
       router.push({ name: "write" });
     }
   }
