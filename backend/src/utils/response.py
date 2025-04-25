@@ -16,5 +16,4 @@ def create_response(is_success=True, data=None, message=None, http_status=200):
         response = {"status": "success", "data": data}
     else:
         response = {"status": "error", "message": message}
-        print(f"create_response: {response} ")
     return jsonify(response), http_status

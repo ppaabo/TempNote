@@ -3,6 +3,9 @@ from src.db import get_db
 from datetime import datetime, timedelta, timezone
 from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def validate_message(data):
@@ -33,19 +36,21 @@ def validate_message(data):
     return True
 
 
+# Check if given uuid_string is a valid
 def validate_uuid(uuid_string):
     try:
         return uuid.UUID(uuid_string)
-    except ValueError:
+    except ValueError as e:
+        logger.warning(f"Invalid UUID format: {uuid_string} - {str(e)}")
         raise InvalidPayload(f"Invalid UUID format: {uuid_string}")
 
 
+# Create a new message
 def save_message(data):
     db = get_db()
 
     try:
         validate_message(data)
-
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(days=data["expiration_days"])
         with db.cursor() as cur:
@@ -59,7 +64,7 @@ def save_message(data):
 
         if not msg_id:
             raise DatabaseError("Failed to save message")
-
+        logger.info(f"Message with id: {msg_id} created")
         return msg_id
 
     except InvalidPayload as e:
@@ -68,9 +73,9 @@ def save_message(data):
         raise DatabaseError("Database insert failed") from e
 
 
+# Fetch a message
 def get_message(id):
     validate_uuid(id)
-
     db = get_db()
     try:
         with db.cursor() as cur:
@@ -93,6 +98,7 @@ def get_message(id):
         raise DatabaseError("Database failure") from e
 
 
+# Delete a message
 def consume_message(id):
     validate_uuid(id)
     db = get_db()
@@ -110,6 +116,8 @@ def consume_message(id):
 
         if not result:
             raise MessageNotFound(f"Message with {id} not found or already expired")
+
+        logger.info(f"Message with id: {id} deleted")
 
         return True
 
