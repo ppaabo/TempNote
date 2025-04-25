@@ -28,15 +28,18 @@ services:
           target: /app/src
         - action: rebuild
           path: ./frontend/package.json
-
   db:
-    image: postgres:latest
+    build:
+      context: ./db
+      dockerfile: Dockerfile
     ports:
       - "5432:5432"
     env_file:
       - .env
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./db/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     healthcheck:
       test:
         [
@@ -46,5 +49,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
 volumes:
   db-data:
