@@ -10,8 +10,19 @@ const notificationStore = useNotificationStore();
 const router = useRouter();
 const message = ref("");
 const password = ref("");
-const expirationDays = ref(3);
+const expirationHours = ref(24);
 const isLoading = ref(false);
+
+const expirationOptions = [
+  { value: 1, label: "1 hour" },
+  { value: 3, label: "3 hours" },
+  { value: 6, label: "6 hours" },
+  { value: 12, label: "12 hours" },
+  { value: 24, label: "1 day" },
+  { value: 72, label: "3 days" },
+  { value: 168, label: "7 days" },
+  { value: 336, label: "14 days" },
+];
 
 /**
  * Encrypts the message and sends it to the API.
@@ -20,7 +31,7 @@ const encrypt = async () => {
   isLoading.value = true;
   try {
     const encryptedMsg = await encryptMsg(message.value, password.value);
-    encryptedMsg.expiration_days = expirationDays.value;
+    encryptedMsg.expiration_hours = expirationHours.value;
     const response = await sendMessage(encryptedMsg);
     notificationStore.add({
       message: "Message encrypted and saved succesfully",
@@ -62,11 +73,15 @@ const encrypt = async () => {
       <label for="expiration">Message expires after:</label>
       <select
         id="expiration"
-        v-model.number="expirationDays"
+        v-model.number="expirationHours"
         :disabled="isLoading"
       >
-        <option v-for="day in [3, 5, 7, 14]" :key="day" :value="day">
-          {{ day }} days
+        <option
+          v-for="option in expirationOptions"
+          :key="option.value"
+          :value="option.value"
+        >
+          {{ option.label }}
         </option>
       </select>
     </div>

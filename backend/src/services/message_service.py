@@ -6,13 +6,15 @@ import uuid
 import logging
 
 logger = logging.getLogger(__name__)
+required_fields = ["ciphertext", "iv", "salt", "expiration_hours"]
+max_hours = 336  # 14 days
+min_hours = 1
 
 
 def validate_message(data):
     """Validate that the required fields are present and valid."""
 
     # Check that all required fields exist
-    required_fields = ["ciphertext", "iv", "salt", "expiration_days"]
     for field in required_fields:
         if field not in data:
             raise InvalidPayload(f"Missing required field: {field}")
@@ -21,16 +23,17 @@ def validate_message(data):
         if isinstance(data[field], str) and data[field].strip() == "":
             raise InvalidPayload(f"Field '{field}' cannot be empty")
 
-    if not isinstance(data["expiration_days"], int):
-        raise InvalidPayload("expiration_days must be an integer")
+    # Check that expiration_hours is a valid value
+    if not isinstance(data["expiration_hours"], int):
+        raise InvalidPayload("expiration_hours must be an int")
 
-    if data["expiration_days"] <= 0:
-        raise InvalidPayload("expiration_days must be greater than 0")
-
-    max_days = 14
-    if data["expiration_days"] > max_days:
+    if (
+        not min(min_hours, max_hours)
+        <= data["expiration_hours"]
+        <= max(min_hours, max_hours)
+    ):
         raise InvalidPayload(
-            f"expiration_days must be less than or equal to {max_days}"
+            f"expiration_hours must be between {min_hours} and {max_hours}"
         )
 
     return True
@@ -52,7 +55,7 @@ def save_message(data):
     try:
         validate_message(data)
         now = datetime.now(timezone.utc)
-        expires_at = now + timedelta(days=data["expiration_days"])
+        expires_at = now + timedelta(hours=data["expiration_hours"])
         with db.cursor() as cur:
             SQL = "INSERT INTO messages (ciphertext, iv, salt, expires_at) VALUES (%s, %s, %s, %s) RETURNING msg_id"
             cur.execute(

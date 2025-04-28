@@ -75,10 +75,6 @@ const readMessage = async () => {
     });
     try {
       await consumeMessage(props.id);
-      notificationStore.add({
-        message: "Message has been destroyed",
-        type: "info",
-      });
     } catch (consumeError) {
       handleError(
         consumeError,
