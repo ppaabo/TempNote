@@ -17,8 +17,9 @@ def configure_logging():
             datefmt="%d-%m-%Y %H:%M:%S",
         )
     else:
-        log_path = os.getenv("LOG_FILE_PATH", "/var/log/gunicorn/app.log")
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        log_dir = os.getenv("LOG_DIR", "/var/log/gunicorn")
+        log_path = os.path.join(log_dir, "app.log")
+        os.makedirs(log_dir, exist_ok=True)
         logging.basicConfig(
             filename=log_path,
             level=logging.INFO,
