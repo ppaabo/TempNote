@@ -1,9 +1,19 @@
 import { AppError, ErrorTypes } from "../utils/errorHandler";
 
+/**
+ * Converts an ArrayBuffer to a Base64 string
+ * @param {ArrayBuffer} buffer - The buffer to encode
+ * @returns {string} Base64 encoded string
+ */
 const pack = (buffer) => {
   return window.btoa(String.fromCharCode(...new Uint8Array(buffer)));
 };
 
+/**
+ * Converts a Base64 string back to an ArrayBuffer
+ * @param {string} packed - Base64 encoded string
+ * @returns {ArrayBuffer} The decoded buffer
+ */
 const unpack = (packed) => {
   const string = window.atob(packed);
   const buffer = new ArrayBuffer(string.length);
@@ -16,31 +26,49 @@ const unpack = (packed) => {
   return buffer;
 };
 
+/**
+ * Encodes a string to a Uint8Array
+ * @param {string} data - String to encode
+ * @returns {Uint8Array} Encoded data
+ */
 const encode = (data) => {
   const encoder = new TextEncoder();
   return encoder.encode(data);
 };
 
+/**
+ * Decodes a Uint8Array to a string
+ * @param {Uint8Array} data - Data to decode
+ * @returns {string} Decoded string
+ */
 const decode = (data) => {
   const decoder = new TextDecoder();
   return decoder.decode(data);
 };
 
+/**
+ * Derives a key from a given password and salt using PBKDF2.
+ * @async
+ * @function deriveKey
+ * @param {string} password - The password to derive the key from.
+ * @param {Uint8Array} salt - A cryptographically secure random value used to derive the key.
+ * @returns {Promise<CryptoKey>} A promise that resolves to a derived AES-GCM key.
+ */
 const deriveKey = async (password, salt) => {
   const encodedPassword = encode(password);
-  const keyMaterial = await crypto.subtle.importKey(
+  const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encodedPassword,
     { name: "PBKDF2" },
     false,
     ["deriveKey"]
   );
-
-  return await crypto.subtle.deriveKey(
+  // 600,000 Iterations for PBKDF2 follows OWASP recommendation
+  return await window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: salt,
-      iterations: 100000,
+      iterations: 600000,
       hash: "SHA-256",
     },
     keyMaterial,
@@ -49,6 +77,7 @@ const deriveKey = async (password, salt) => {
     ["encrypt", "decrypt"]
   );
 };
+
 /**
  * Encrypts a given message using AES-GCM encryption with a password-derived key.
  *
@@ -78,10 +107,12 @@ export const encryptMsg = async (message, password) => {
   }
   try {
     const encoded = encode(message);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const salt = crypto.getRandomValues(new Uint8Array(16));
+    // 12-byte IV recommended for AES-GCM
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    // 32-byte exceeds the minium recommendation of 16 bytes
+    const salt = window.crypto.getRandomValues(new Uint8Array(32));
     const key = await deriveKey(password, salt);
-    const cipher = await crypto.subtle.encrypt(
+    const cipher = await window.crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
       key,
       encoded
@@ -99,6 +130,7 @@ export const encryptMsg = async (message, password) => {
     );
   }
 };
+
 /**
  * Decrypts an AES-GCM encrypted message using a password-derived key.
  *
@@ -138,7 +170,7 @@ export const decryptMsg = async (ciphertext, iv, salt, password) => {
     const saltBuffer = new Uint8Array(unpack(salt));
     const key = await deriveKey(password, saltBuffer);
 
-    const decrypted = await crypto.subtle.decrypt(
+    const decrypted = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv: ivBuffer },
       key,
       cipherBuffer
