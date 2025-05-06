@@ -43,3 +43,4 @@ Thumbs.db
 *.env
 *.env*
 *.env.local
+prod/frontend/certs

@@ -1,0 +1,41 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: prod/frontend/Dockerfile
+    ports:
+      - "443:443"
+    volumes:
+      - ./prod/frontend/certs/selfsigned.crt:/etc/ssl/certs/selfsigned.crt:ro
+      - ./prod/frontend/certs/selfsigned.key:/etc/ssl/private/selfsigned.key:ro
+  backend:
+    build:
+      context: .
+      dockerfile: prod/backend/Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - prod/.env
+  db:
+    build:
+      context: .
+      dockerfile: prod/db/Dockerfile
+    ports:
+      - "127.0.0.1:5432:5432"
+    env_file:
+      - prod/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prod/db/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
