@@ -5,27 +5,21 @@ from src.utils.response import create_response
 from src.db import initialize_db, close_db
 import logging
 import os
+import sys
 
 
 def configure_logging():
     env = os.getenv("APP_ENV", "production")
+    log_level = logging.INFO
+    log_format = "%(asctime)s %(levelname)s in %(module)s:%(lineno)d %(message)s"
+    date_format = "%d-%m-%Y %H:%M:%S"
 
-    if env == "development":
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s %(levelname)s in %(module)s:%(lineno)d %(message)s",
-            datefmt="%d-%m-%Y %H:%M:%S",
-        )
-    else:
-        log_dir = os.getenv("LOG_DIR", "/var/log/gunicorn")
-        log_path = os.path.join(log_dir, "app.log")
-        os.makedirs(log_dir, exist_ok=True)
-        logging.basicConfig(
-            filename=log_path,
-            level=logging.INFO,
-            format="%(asctime)s %(levelname)s in %(module)s:%(lineno)d %(message)s",
-            datefmt="%d-%m-%Y %H:%M:%S",
-        )
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=log_level,
+        format=log_format,
+        datefmt=date_format,
+    )
 
     return env
 
