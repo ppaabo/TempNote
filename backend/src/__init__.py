@@ -48,7 +48,9 @@ def create_app():
     @app.errorhandler(MessageNotFound)
     def handle_msg_not_found(e):
         app.logger.info(f"MessageNotFound: {e}")
-        return create_response(is_success=False, message=str(e), http_status=404)
+        return create_response(
+            is_success=False, message="Message not found", http_status=404
+        )
 
     @app.errorhandler(DatabaseError)
     def handle_db_error(e):
@@ -60,7 +62,9 @@ def create_app():
     @app.errorhandler(InvalidPayload)
     def handle_payload_error(e):
         app.logger.info(f"Invalid request payload: {e}")
-        return create_response(is_success=False, message=str(e), http_status=400)
+        return create_response(
+            is_success=False, message="Invalid request data", http_status=400
+        )
 
     @app.errorhandler(Exception)
     def handle_generic_error(e):
