@@ -4,8 +4,8 @@ pipeline {
     environment {
         PYTHON_ENV = 'venv'
         BACKEND_PATH = '/workspace/backend'
-        NGINX_CONF = '/workspace/deploy/nginx/nginx.conf'
-        DB_IMAGE_PATH = '/workspace/deploy/docker/db'
+        NGINX_CONF = '/workspace/prod/frontend/nginx.conf'
+        DB_IMAGE_PATH = '/workspace/prod/db'
     }
 
     tools {
@@ -26,10 +26,10 @@ pipeline {
                     pip install bandit safety
 
                     echo "Running Bandit..."
-                    bandit -r ${BACKEND_PATH} || true
+                    bandit -r ${BACKEND_PATH} -f json -o bandit-report.json || true
 
                     echo "Running Safety ('safety scan' requires login)..."
-                    safety check -r ${BACKEND_PATH}/requirements.txt || true
+                    safety check -r ${BACKEND_PATH}/requirements.txt --json > safety-report.json || true
                 '''
             }
         }
@@ -40,10 +40,11 @@ pipeline {
                     sh '''
                         echo "Running npm audit..."
                         npm install
-                        npm audit --audit-level=moderate || true
+                        npm audit --audit-level=moderate --json > audit-report.json || true
 
                         echo "Running retire.js..."
-                        retire || true
+                        retire --outputformat cyclonedx  > /workspace/frontend/retire-report.json || true
+                        cp /workspace/frontend/*-report.* ${WORKSPACE}/
                     '''
                 }
             }
@@ -53,30 +54,48 @@ pipeline {
             steps {
                 sh '''
                     echo "Running Gixy on nginx.conf..."
-                    gixy ${NGINX_CONF} || true
+                    gixy -f json -o gixy-report.json ${NGINX_CONF} || true
                 '''
             }
         }
 
-        stage('PostgreSQL: Docker Image Scan') {
+        stage('Backend & Frontend: Docker Image Scan') {
             steps {
                 sh '''
-                    echo "Building PostgreSQL image locally..."
-                    docker build -t local-postgres-image /workspace/deploy/docker/db
+                    echo "Building Backend image..."
+                    docker build -t local-backend-image -f /workspace/prod/backend/Dockerfile /workspace
 
-                    echo "Running Trivy image scan..."
-                    trivy image local-postgres-image || true
+                    echo "Scanning Backend image with Trivy..."
+                    trivy image --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o backend-image-report.html local-backend-image || true
 
-                    echo "Running Trivy config scan..."
-                    trivy config /workspace/deploy/docker/db || true
+                    echo "Building Frontend image..."
+                    docker build -t local-frontend-image -f /workspace/prod/frontend/Dockerfile /workspace
+
+                    echo "Scanning Frontend image with Trivy..."
+                    trivy image --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o frontend-image-report.html local-frontend-image || true
                 '''
             }
         }
-    }
 
-    post {
-        always {
-            echo 'Pipeline completed.'
+        stage('PostgreSQL: Docker Image & Config Scan') {
+                steps {
+                    sh '''
+                        echo "Building PostgreSQL image locally..."
+                        docker build -t local-postgres-image -f ${DB_IMAGE_PATH}/Dockerfile /workspace
+
+                        echo "Running Trivy image scan..."
+                        trivy image --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o db-image-report.html local-postgres-image || true
+
+                        echo "Running Trivy config scan..."
+                        trivy config --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o db-config-report.html ${DB_IMAGE_PATH} || true
+                    '''
+                }
         }
     }
+        post {
+            always {
+                echo 'Pipeline completed.'
+                archiveArtifacts artifacts: '**/*-report.json, **/*-report.html', allowEmptyArchive: true
+            }
+        }
 }
