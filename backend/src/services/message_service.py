@@ -12,8 +12,16 @@ min_hours = 1
 
 
 def validate_message(data):
-    """Validate that the required fields are present and valid."""
+    """
+    Validates message data contains all required fields with proper values.
 
+    Args:
+        data (dict): Message data containing required fields
+    Raises:
+        InvalidPayload: If validation fails
+    Returns:
+        bool: True if validation passes
+    """
     # Check that all required fields exist
     for field in required_fields:
         if field not in data:
@@ -39,8 +47,17 @@ def validate_message(data):
     return True
 
 
-# Check if given uuid_string is a valid
 def validate_uuid(uuid_string):
+    """
+    Validates a string is a proper UUID format.
+
+    Args:
+        uuid_string (str): String to validate as UUID
+    Raises:
+        InvalidPayload: If UUID format is invalid
+    Returns:
+        uuid.UUID: Validated UUID object
+    """
     try:
         return uuid.UUID(uuid_string)
     except ValueError as e:
@@ -49,7 +66,21 @@ def validate_uuid(uuid_string):
 
 
 # Create a new message
+
+
 def save_message(data):
+    """
+    Saves a new encrypted message to the database.
+
+    Args:
+        data (dict): Message data containing ciphertext, iv, salt and expiration_hours
+    Raises:
+        DatabaseError: If database operation fails
+        InvalidPayload: If message data is invalid
+
+    Returns:
+        str: UUID of the created message
+    """
     db = get_db()
 
     try:
@@ -78,8 +109,21 @@ def save_message(data):
 
 # Fetch a message
 def get_message(id):
+    """
+    Retrieves a message by its ID if it exists and hasn't expired.
+
+    Args:
+        id (str): UUID of the message to retrieve
+    Raises:
+        MessageNotFound: If message doesn't exist or has expired
+        DatabaseError: If database operation fails
+        InvalidPayload: If UUID format is invalid
+    Returns:
+        dict: Message data including ciphertext, iv, salt and timestamps
+    """
     validate_uuid(id)
     db = get_db()
+    now = datetime.now(timezone.utc)
     try:
         with db.cursor() as cur:
             SQL = "SELECT ciphertext, iv, salt, created_at, expires_at FROM messages WHERE msg_id = %s"
@@ -88,6 +132,15 @@ def get_message(id):
 
         if not message:
             raise MessageNotFound(f"Message {id} not found")
+
+        # Check if the message has expired
+        expires_at = message[4]
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < now:
+            logger.info(f"Message {id} has expired, deleting it")
+            consume_message(id)
+            raise MessageNotFound(f"Message {id} has expired and been deleted")
 
         return {
             "ciphertext": message[0],
@@ -103,16 +156,27 @@ def get_message(id):
 
 # Delete a message
 def consume_message(id):
+    """
+    Deletes a message from the database by its ID.
+
+    Args:
+        id (str): UUID of the message to delete
+    Raises:
+        MessageNotFound: If message doesn't exist
+        DatabaseError: If database operation fails
+        InvalidPayload: If UUID format is invalid
+    Returns:
+        bool: True if message was successfully deleted
+    """
     validate_uuid(id)
     db = get_db()
-    now = datetime.now(timezone.utc)
 
     try:
         with db.cursor() as cur:
-            SQL = "DELETE FROM messages WHERE msg_id = %s AND expires_at > %s RETURNING msg_id"
+            SQL = "DELETE FROM messages WHERE msg_id = %s RETURNING msg_id"
             cur.execute(
                 SQL,
-                (id, now),
+                (id,),
             )
             result = cur.fetchone()
         db.commit()
