@@ -63,12 +63,12 @@ const deriveKey = async (password, salt) => {
     false,
     ["deriveKey"]
   );
-  // 600,000 Iterations for PBKDF2 follows OWASP recommendation
+  // OWASP recommendation: 600,000 Iterations for PBKDF2 (800 000 used)
   return await window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: salt,
-      iterations: 600000,
+      iterations: 800000,
       hash: "SHA-256",
     },
     keyMaterial,
@@ -109,8 +109,8 @@ export const encryptMsg = async (message, password) => {
     const encoded = encode(message);
     // 12-byte IV recommended for AES-GCM
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    // 32-byte exceeds the minium recommendation of 16 bytes
-    const salt = window.crypto.getRandomValues(new Uint8Array(32));
+    // 16-byte salt recommended for PBKDF2
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const key = await deriveKey(password, salt);
     const cipher = await window.crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
@@ -132,7 +132,7 @@ export const encryptMsg = async (message, password) => {
 };
 
 /**
- * Decrypts an AES-GCM encrypted message using a password-derived key.
+ * Decrypts an AES-GC<WM encrypted message using a password-derived key.
  *
  * @async
  * @function decryptMsg

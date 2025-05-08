@@ -4,11 +4,39 @@ from datetime import datetime, timedelta, timezone
 from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
 import uuid
 import logging
+import base64
+import re
 
 logger = logging.getLogger(__name__)
 required_fields = ["ciphertext", "iv", "salt", "expiration_hours"]
 max_hours = 336  # 14 days
 min_hours = 1
+
+
+def is_valid_base64(s):
+    """
+    Check if a string is valid base64 encoding.
+
+    Args:
+        s (str): String to validate as base64
+    Returns:
+        bool: True if string is valid base64
+    """
+    if not isinstance(s, str):
+        return False
+
+    # Regex pattern for standard Base64 charset
+    pattern = r"^[A-Za-z0-9+/]+={0,2}$"
+    if not re.match(pattern, s):
+        return False
+
+    if len(s) % 4 != 0:
+        return False
+    try:
+        base64.b64decode(s)
+        return True
+    except Exception:
+        return False
 
 
 def validate_message(data):
@@ -43,6 +71,21 @@ def validate_message(data):
         raise InvalidPayload(
             f"expiration_hours must be between {min_hours} and {max_hours}"
         )
+
+    # Validate Base64 format for crypto fields
+    for field in ["ciphertext", "iv", "salt"]:
+        if not is_valid_base64(data[field]):
+            raise InvalidPayload(
+                f"Field '{field}' must be a valid Base64-encoded string"
+            )
+    # Length validation based on expected values
+    # IV should be 16 characters in Base64 (12 bytes)
+    if len(data["iv"]) != 16:
+        raise InvalidPayload("Invalid IV length - must be exactly 16 characters")
+
+    # Salt should be 24 characters in Base64 (16 bytes)
+    if len(data["salt"]) != 24:
+        raise InvalidPayload("Invalid salt length - must be exactly 24 characters")
 
     return True
 
@@ -81,10 +124,9 @@ def save_message(data):
     Returns:
         str: UUID of the created message
     """
+    validate_message(data)
     db = get_db()
-
     try:
-        validate_message(data)
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(hours=data["expiration_hours"])
         with db.cursor() as cur:
