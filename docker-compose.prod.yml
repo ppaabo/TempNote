@@ -12,8 +12,6 @@ services:
     build:
       context: .
       dockerfile: prod/backend/Dockerfile
-    ports:
-      - "5000:5000"
     env_file:
       - prod/.env
   db:
