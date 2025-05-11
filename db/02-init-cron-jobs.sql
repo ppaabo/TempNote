@@ -1,4 +1,3 @@
--- 03-init-cron-jobs.sql
 \c postgres;
 
 -- Run every hour (xx:00)

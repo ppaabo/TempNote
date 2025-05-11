@@ -10,5 +10,4 @@ USER worker
 COPY --chown=worker:worker backend/ .
 
 EXPOSE 5000
-ENV APP_ENV=production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src:create_app()", "--access-logfile=-", "--error-logfile=-"]
