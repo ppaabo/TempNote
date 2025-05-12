@@ -66,6 +66,10 @@ def initialize_db():
 
 
 def get_db():
+    """
+    Get a PostgreSQL database connection from the Flask app context.
+    Creates a new connection if none exists in the current context.
+    """
     if "db" not in g:
         g.db = psycopg.connect(
             dbname=os.getenv("POSTGRES_DB"),
@@ -78,10 +82,9 @@ def get_db():
 
 
 def close_db(e=None):
+    """
+    Close the database connection stored in the Flask app context.
+    """
     db = g.pop("db", None)
     if db is not None:
         db.close()
-
-
-if __name__ == "__main__":
-    initialize_db()
