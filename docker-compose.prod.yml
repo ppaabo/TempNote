@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: prod/frontend/Dockerfile
+    depends_on:
+      - backend
     ports:
       - "443:443"
     volumes:
@@ -12,6 +14,9 @@ services:
     build:
       context: .
       dockerfile: prod/backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
     env_file:
       - prod/.env
   db:
