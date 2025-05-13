@@ -1,6 +1,6 @@
 from flask import Flask
 from src.routes.message import messages_bp
-from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
+from src.exceptions import MessageNotFound, InvalidPayload, AppDatabaseError
 from src.utils.response import create_response
 from src.db import initialize_db, close_db
 import logging
@@ -33,7 +33,11 @@ def create_app():
     app.logger.info(f"Application starting in {env} environment")
     app.register_blueprint(messages_bp, url_prefix="/api")
 
-    initialize_db()
+    try:
+        initialize_db()
+    except AppDatabaseError as e:
+        app.logger.critical(f"Fatal database initialization error: {e}")
+        sys.exit(1)
 
     @app.teardown_appcontext
     def teardown_db(exception):
@@ -46,9 +50,9 @@ def create_app():
             is_success=False, message="Message not found", http_status=404
         )
 
-    @app.errorhandler(DatabaseError)
+    @app.errorhandler(AppDatabaseError)
     def handle_db_error(e):
-        app.logger.error(f"DatabaseError: {e}")
+        app.logger.error(f"AppDatabaseError: {e}")
         return create_response(
             is_success=False, message="Database error", http_status=500
         )

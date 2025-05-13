@@ -4,6 +4,7 @@ import psycopg
 from psycopg import sql
 from flask import g
 import logging
+from src.exceptions import AppDatabaseError
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +26,10 @@ def initialize_db():
 
     if missing_vars:
         error_msg = f"Missing required environment variables: {', '.join(missing_vars)}"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
+        raise AppDatabaseError(error_msg)
 
-    max_retries = 5
-    retry_delay = 3
+    max_retries = 3
+    retry_delay = 8
     for attempt in range(max_retries):
         try:
             with psycopg.connect(
@@ -40,6 +40,7 @@ def initialize_db():
                 port=POSTGRES_PORT,
             ) as conn:
                 with conn.cursor() as cur:
+                    # Create MESSAGES table if it doesn't exist
                     cur.execute(
                         sql.SQL(
                             """
@@ -57,12 +58,21 @@ def initialize_db():
                 conn.commit()
             logging.info(f"Database connection established on attempt {attempt + 1}")
             return
-        except Exception as e:
-            logging.warning(f"Database connection attempt {attempt + 1} failed: {e}")
+
+        except (psycopg.OperationalError, psycopg.InterfaceError) as e:
+            logging.info(f"Database connection attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
                 logging.info(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
-    raise Exception("Failed to connect to database after multiple attempts")
+
+        except psycopg.Error as e:
+            raise AppDatabaseError(f"Database operation failed: {e}")
+
+        except Exception as e:
+            raise AppDatabaseError(f"Unexpected error during database setup: {e}")
+
+    logging.error(f"Failed to connect to database after {max_retries} attempts.")
+    raise AppDatabaseError("Failed to connect to database after multiple attempts")
 
 
 def get_db():

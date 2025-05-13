@@ -2,7 +2,7 @@ class MessageNotFound(Exception):
     pass
 
 
-class DatabaseError(Exception):
+class AppDatabaseError(Exception):
     pass
 
 

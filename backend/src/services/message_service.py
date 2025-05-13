@@ -1,7 +1,7 @@
 import psycopg
 from src.db import get_db
 from datetime import datetime, timedelta, timezone
-from src.exceptions import MessageNotFound, DatabaseError, InvalidPayload
+from src.exceptions import MessageNotFound, AppDatabaseError, InvalidPayload
 import uuid
 import logging
 import base64
@@ -118,7 +118,7 @@ def save_message(data):
     Args:
         data (dict): Message data containing ciphertext, iv, salt and expiration_hours
     Raises:
-        DatabaseError: If database operation fails
+        AppDatabaseError: If database operation fails
         InvalidPayload: If message data is invalid
 
     Returns:
@@ -139,14 +139,14 @@ def save_message(data):
         db.commit()
 
         if not msg_id:
-            raise DatabaseError("Failed to save message")
+            raise AppDatabaseError("Failed to save message")
         logger.info(f"Message with id: {msg_id} created")
         return msg_id
 
     except InvalidPayload as e:
         raise e
     except psycopg.Error as e:
-        raise DatabaseError("Database insert failed") from e
+        raise AppDatabaseError("Database insert failed") from e
 
 
 # Fetch a message
@@ -158,7 +158,7 @@ def get_message(id):
         id (str): UUID of the message to retrieve
     Raises:
         MessageNotFound: If message doesn't exist or has expired
-        DatabaseError: If database operation fails
+        AppDatabaseError: If database operation fails
         InvalidPayload: If UUID format is invalid
     Returns:
         dict: Message data including ciphertext, iv, salt and timestamps
@@ -193,7 +193,7 @@ def get_message(id):
         }
 
     except psycopg.Error as e:
-        raise DatabaseError("Database failure") from e
+        raise AppDatabaseError("Database failure") from e
 
 
 # Delete a message
@@ -205,7 +205,7 @@ def consume_message(id):
         id (str): UUID of the message to delete
     Raises:
         MessageNotFound: If message doesn't exist
-        DatabaseError: If database operation fails
+        AppDatabaseError: If database operation fails
         InvalidPayload: If UUID format is invalid
     Returns:
         bool: True if message was successfully deleted
@@ -231,4 +231,4 @@ def consume_message(id):
         return True
 
     except psycopg.Error as e:
-        raise DatabaseError("Failed to delete message from database.") from e
+        raise AppDatabaseError("Failed to delete message from database.") from e
