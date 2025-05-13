@@ -30,8 +30,8 @@ cd temp-note
 # Create environment file
 cp example.env .env
 
-# Start all services in development mode
-docker compose up
+# Start all services in development mode (With HMR for frontend & backend)
+docker compose up --watch
 
 # Access the application at http://localhost:5173
 ```

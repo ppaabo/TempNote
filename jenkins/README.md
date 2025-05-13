@@ -5,7 +5,7 @@
 
 ## Build Jenkins Docker Image
 ```
-cd /home/user/TempNote/prod/jenkins
+cd /home/user/temp-note/prod/jenkins
 docker build -t jenkins-with-tools .
 ```
 ## Run the Jenkins Container
@@ -15,7 +15,7 @@ docker run -d \
   -p 8080:8080 \
   -p 50000:50000 \
   -v jenkins_home:/var/jenkins_home \
-  -v /home/user/TempNote:/workspace \
+  -v /home/user/temp-note:/workspace \
   -v /var/run/docker.sock:/var/run/docker.sock \
   jenkins-with-tools
 ``` 
