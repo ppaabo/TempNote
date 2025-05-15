@@ -5,7 +5,7 @@ pipeline {
         PYTHON_ENV = 'venv'
         BACKEND_PATH = '/workspace/backend'
         NGINX_CONF = '/workspace/prod/frontend/nginx.conf'
-        DB_IMAGE_PATH = '/workspace/prod/db'
+        DB_PATH = '/workspace/prod/db'
     }
 
     tools {
@@ -62,17 +62,21 @@ pipeline {
         stage('Backend & Frontend: Docker Image Scan') {
             steps {
                 sh '''
+                    echo "Downloading Trivy template..."
+                    mkdir -p ${WORKSPACE}/trivy-templates
+                    curl -s https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -o ${WORKSPACE}/trivy-templates/html.tpl
+
                     echo "Building Backend image..."
                     docker build -t local-backend-image -f /workspace/prod/backend/Dockerfile /workspace
 
                     echo "Scanning Backend image with Trivy..."
-                    trivy image --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o backend-image-report.html local-backend-image || true
+                    trivy image --format template --template "@${WORKSPACE}/trivy-templates/html.tpl" -o backend-image-report.html local-backend-image || true
 
                     echo "Building Frontend image..."
                     docker build -t local-frontend-image -f /workspace/prod/frontend/Dockerfile /workspace
 
                     echo "Scanning Frontend image with Trivy..."
-                    trivy image --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o frontend-image-report.html local-frontend-image || true
+                    trivy image --format template --template "@${WORKSPACE}/trivy-templates/html.tpl" -o frontend-image-report.html local-frontend-image || true
                 '''
             }
         }
@@ -81,13 +85,13 @@ pipeline {
                 steps {
                     sh '''
                         echo "Building PostgreSQL image locally..."
-                        docker build -t local-postgres-image -f ${DB_IMAGE_PATH}/Dockerfile /workspace
+                        docker build -t local-postgres-image -f ${DB_PATH}/Dockerfile /workspace
 
                         echo "Running Trivy image scan..."
-                        trivy image --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o db-image-report.html local-postgres-image || true
+                        trivy image --format template --template "@${WORKSPACE}/trivy-templates/html.tpl" -o db-image-report.html local-postgres-image || true
 
                         echo "Running Trivy config scan..."
-                        trivy config --format template --template '@/usr/local/share/trivy/templates/html.tpl' -o db-config-report.html ${DB_IMAGE_PATH} || true
+                        trivy config --format template --template "@${WORKSPACE}/trivy-templates/html.tpl" -o db-config-report.html ${DB_PATH} || true
                     '''
                 }
         }

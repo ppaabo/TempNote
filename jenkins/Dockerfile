@@ -1,8 +1,9 @@
 FROM jenkins/jenkins:lts
 USER root
 
-# Create the Docker group (ID 986) & add Jenkins to it
-RUN groupadd -g 986 docker || true
+# Create the Docker group & add Jenkins to it
+ARG DOCKER_GID=986
+RUN groupadd -g ${DOCKER_GID} docker || true
 RUN usermod -aG docker jenkins
 
 # Install tools used in the pipeline
@@ -21,8 +22,7 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
 RUN python3 -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install gixy && \
-    curl -sfL https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.48.4_Linux-64bit.deb -o trivy.deb && \
-    dpkg -i trivy.deb
+    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin  
 
 ENV PATH="/opt/venv/bin:$PATH"
 
